@@ -38,6 +38,7 @@ RestrictAddressFamilies=AF_UNIX AF_NETLINK AF_INET AF_INET6 AF_PACKET
 SystemCallFilter=~@clock @cpu-emulation @debug @keyring @module @mount @obsolete @raw-io @reboot @swap
 SystemCallArchitectures=native
 ReadWritePaths=/run/systemd
+Environment=SYSTEMD_LOG_LEVEL=debug
 
 [Install]
 WantedBy=multi-user.target

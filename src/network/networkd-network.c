@@ -162,7 +162,9 @@ static int network_load_one(Manager *manager, const char *filename) {
         network->dhcp_use_dns = true;
         network->dhcp_use_hostname = true;
         network->dhcp_use_routes = true;
-        network->dhcp_send_hostname = true;
+        /* RFC7844 section 3.7
+           SHOULD NOT send the Host Name option */
+        network->dhcp_send_hostname = false;
         network->dhcp_route_metric = DHCP_ROUTE_METRIC;
         network->dhcp_client_identifier = DHCP_CLIENT_ID_DUID;
         network->dhcp_route_table = RT_TABLE_MAIN;

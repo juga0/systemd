@@ -166,7 +166,14 @@ static int network_load_one(Manager *manager, const char *filename) {
            SHOULD NOT send the Host Name option */
         network->dhcp_send_hostname = false;
         network->dhcp_route_metric = DHCP_ROUTE_METRIC;
-        network->dhcp_client_identifier = DHCP_CLIENT_ID_DUID;
+        /* RFC7844 section 3.:
+           MAY contain the Client Identifier option
+           Section 3.5:
+           clients MUST use client identifiers based solely
+           on the link-layer address */
+        /* NOTE: Using MAC, as it does not reveal extra information,
+         * and some servers might not answer if this option is not sent */
+        network->dhcp_client_identifier = DHCP_CLIENT_ID_MAC;
         network->dhcp_route_table = RT_TABLE_MAIN;
 
         network->dhcp_server_emit_dns = true;

@@ -602,10 +602,17 @@ int dhcp4_configure(Link *link) {
         if (r < 0)
                 return r;
 
-        r = sd_dhcp_client_set_request_broadcast(link->dhcp_client,
-                                                 link->network->dhcp_broadcast);
-        if (r < 0)
-                return r;
+        /* RFC7844 section 3:
+           SHOULD NOT contain any other option. */
+        /* NOTE: configuration variable dhcp_broadcast should be set to a
+         * default, that is checked here.
+         * It would be nullified when using the Anonymity Profiles */
+        if (link->network->dhcp_broadcast) {
+                r = sd_dhcp_client_set_request_broadcast(link->dhcp_client,
+                                                         link->network->dhcp_broadcast);
+                if (r < 0)
+                        return r;
+        }
 
         if (link->mtu) {
                 r = sd_dhcp_client_set_mtu(link->dhcp_client, link->mtu);
@@ -613,6 +620,16 @@ int dhcp4_configure(Link *link) {
                         return r;
         }
 
+        /* RFC7844 section 3.6.:
+           The client intending to protect its privacy SHOULD only request a
+           minimal number of options in the PRL and SHOULD also randomly shuffle
+           the ordering of option codes in the PRL.  If this random ordering
+           cannot be implemented, the client MAY order the option codes in the
+           PRL by option code number (lowest to highest).
+        */
+        /* NOTE: dhcp_use_mtu is false by default,
+         * but this option should be nullified when using RFC7844 */
+        /* NOTE: maybe there should be another called *send*? */
         if (link->network->dhcp_use_mtu) {
                 r = sd_dhcp_client_set_request_option(link->dhcp_client,
                                                       SD_DHCP_OPTION_INTERFACE_MTU);

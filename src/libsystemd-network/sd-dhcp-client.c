@@ -1806,8 +1806,15 @@ int sd_dhcp_client_start(sd_dhcp_client *client) {
         if (r < 0)
                 return r;
 
-        if (client->last_addr)
-                client->state = DHCP_STATE_INIT_REBOOT;
+        /* RFC7844 section 3.3:
+           SHOULD perform a complete four-way handshake, starting with a
+           DHCPDISCOVER, to obtain a new address lease.  If the client can
+           ascertain that this is exactly the same network to which it was
+           previously connected, and if the link-layer address did not change,
+           the client MAY issue a DHCPREQUEST to try to reclaim the current
+           address. */
+        /* NOTE: there should be a configuration option to enable INIT_REBOOT
+        state when not using the Anonymity Profiles*/
 
         r = client_start(client);
         if (r >= 0)

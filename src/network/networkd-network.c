@@ -161,7 +161,21 @@ static int network_load_one(Manager *manager, const char *filename) {
         network->dhcp_use_ntp = true;
         network->dhcp_use_dns = true;
         network->dhcp_use_hostname = true;
-        network->dhcp_use_routes = true;
+        /* RFC7844 section 3.6.:
+           The client intending to protect its privacy SHOULD only request a
+           minimal number of options in the PRL and SHOULD also randomly shuffle
+           the ordering of option codes in the PRL.  If this random ordering
+           cannot be implemented, the client MAY order the option codes in the
+           PRL by option code number (lowest to highest).
+        */
+        /* NOTE: when using Anonymity Profiles, routes PRL options are sent
+         * by default, so they should not be added again here.
+         * For this reason this option has been set to false by default, but
+         * it should be nullified when using Anonymity Profiles. */
+        /* NOTE: even if this variable is called "use", it also "sends" PRL
+         * options, maybe there should be a different configuration variable
+         * to send or not route options?. */
+        network->dhcp_use_routes = false;
         /* RFC7844 section 3.7
            SHOULD NOT send the Host Name option */
         network->dhcp_send_hostname = false;

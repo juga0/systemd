@@ -108,12 +108,32 @@ struct sd_dhcp_client {
         usec_t start_delay;
 };
 
+/* RFC7844 section 3:
+   MAY contain the Parameter Request List option.
+   RFC7844 section 3.6:
+   The client intending to protect its privacy SHOULD only request a
+   minimal number of options in the PRL and SHOULD also randomly shuffle
+   the ordering of option codes in the PRL.  If this random ordering
+   cannot be implemented, the client MAY order the option codes in the
+   PRL by option code number (lowest to highest).
+*/
+/* NOTE: sending PRL options that Windows 10 RFC7844 implementation sends,
+ * ordered by code number, which in hexadecimal is:
+ * 37 0d 01 03 06 0f 1f 21 2b 2c 2e 2f 79 f9 fc */
 static const uint8_t default_req_opts[] = {
-        SD_DHCP_OPTION_SUBNET_MASK,
-        SD_DHCP_OPTION_ROUTER,
-        SD_DHCP_OPTION_HOST_NAME,
-        SD_DHCP_OPTION_DOMAIN_NAME,
-        SD_DHCP_OPTION_DOMAIN_NAME_SERVER,
+        SD_DHCP_OPTION_SUBNET_MASK,                     // 1
+        SD_DHCP_OPTION_ROUTER,                          // 3
+        SD_DHCP_OPTION_DOMAIN_NAME_SERVER,              // 6
+        SD_DHCP_OPTION_DOMAIN_NAME,                     // 15
+        SD_DHCP_OPTION_ROUTER_DISCOVER,                 // 31
+        SD_DHCP_OPTION_STATIC_ROUTE,                    // 33
+        SD_DHCP_OPTION_VENDOR_SPECIFIC,                 // 43
+        SD_DHCP_OPTION_NETBIOS_NAMESERVER,              // 44
+        SD_DHCP_OPTION_NETBIOS_NODETYPE,                // 46
+        SD_DHCP_OPTION_NETBIOS_SCOPE,                   // 47
+        SD_DHCP_OPTION_CLASSLESS_STATIC_ROUTE,          // 121
+        SD_DHCP_OPTION_PRIVATE_CLASSLESS_STATIC_ROUTE,  // 249
+        SD_DHCP_OPTION_PRIVATE_PROXY_AUTODISCOVERY,     // 252
 };
 
 static int client_receive_message_raw(
@@ -588,11 +608,15 @@ static int client_message_init(
            it MUST include that list in any subsequent DHCPREQUEST
            messages.
          */
-        r = dhcp_option_append(&packet->dhcp, optlen, &optoffset, 0,
-                               SD_DHCP_OPTION_PARAMETER_REQUEST_LIST,
-                               client->req_opts_size, client->req_opts);
-        if (r < 0)
-                return r;
+        /* NOTE: in case that there would be an option to do not send
+         * any PRL, the size should be checked before sending */
+        if(client->req_opts_size > 0) {
+                r = dhcp_option_append(&packet->dhcp, optlen, &optoffset, 0,
+                                       SD_DHCP_OPTION_PARAMETER_REQUEST_LIST,
+                                       client->req_opts_size, client->req_opts);
+                if (r < 0)
+                        return r;
+        }
 
         /* RFC2131 section 3.5:
            The client SHOULD include the ’maximum DHCP message size’ option to

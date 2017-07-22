@@ -78,8 +78,10 @@ static void test_request_basic(sd_event *e) {
                                         SD_DHCP_OPTION_SUBNET_MASK) == -EEXIST);
         assert_se(sd_dhcp_client_set_request_option(client,
                                         SD_DHCP_OPTION_ROUTER) == -EEXIST);
+        /* RFC7844: this option is not set in the default PRL, so it should
+         * succed in setting it up */
         assert_se(sd_dhcp_client_set_request_option(client,
-                                        SD_DHCP_OPTION_HOST_NAME) == -EEXIST);
+                                        SD_DHCP_OPTION_HOST_NAME) == 0);
         assert_se(sd_dhcp_client_set_request_option(client,
                                         SD_DHCP_OPTION_DOMAIN_NAME) == -EEXIST);
         assert_se(sd_dhcp_client_set_request_option(client,
@@ -97,10 +99,15 @@ static void test_request_basic(sd_event *e) {
                                         SD_DHCP_OPTION_PARAMETER_REQUEST_LIST)
                         == -EINVAL);
 
-        assert_se(sd_dhcp_client_set_request_option(client, 33) == 0);
-        assert_se(sd_dhcp_client_set_request_option(client, 33) == -EEXIST);
-        assert_se(sd_dhcp_client_set_request_option(client, 44) == 0);
-        assert_se(sd_dhcp_client_set_request_option(client, 33) == -EEXIST);
+        /* RFC7844: option 33 (SD_DHCP_OPTION_STATIC_ROUTE) is set in the
+         * default PRL, so it is changed to other option that is not set by
+         * default, to check that it succed setting it, as option 17
+         * (SD_DHCP_OPTION_ROOT_PATH) and 42 (SD_DHCP_OPTION_NTP_SERVER),
+         * but not setting it twice */
+        assert_se(sd_dhcp_client_set_request_option(client, 17) == 0);
+        assert_se(sd_dhcp_client_set_request_option(client, 17) == -EEXIST);
+        assert_se(sd_dhcp_client_set_request_option(client, 42) == 0);
+        assert_se(sd_dhcp_client_set_request_option(client, 17) == -EEXIST);
 
         sd_dhcp_client_unref(client);
 }

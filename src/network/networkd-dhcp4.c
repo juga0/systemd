@@ -620,6 +620,20 @@ int dhcp4_configure(Link *link) {
                         return r;
         }
 
+        /* RFC7844 section 3.6.:
+           The client intending to protect its privacy SHOULD only request a
+           minimal number of options in the PRL and SHOULD also randomly shuffle
+           the ordering of option codes in the PRL.  If this random ordering
+           cannot be implemented, the client MAY order the option codes in the
+           PRL by option code number (lowest to highest).
+        */
+        /* NOTE: when using Anonymity Profiles, routes PRL options are sent
+         * by default, so they should not be added again here.
+         * For this reason this option has been set to false by default, but
+         * it should be nullified when using Anonymity Profiles. */
+        /* NOTE: even if this variable is called "use", it also "sends" PRL
+         * options, maybe there should be a different configuration variable
+         * to send or not route options?. */
         if (link->network->dhcp_use_routes) {
                 r = sd_dhcp_client_set_request_option(link->dhcp_client,
                                                       SD_DHCP_OPTION_STATIC_ROUTE);
@@ -632,13 +646,16 @@ int dhcp4_configure(Link *link) {
         }
 
         /* Always acquire the timezone and NTP */
-        r = sd_dhcp_client_set_request_option(link->dhcp_client, SD_DHCP_OPTION_NTP_SERVER);
-        if (r < 0)
-                return r;
-
-        r = sd_dhcp_client_set_request_option(link->dhcp_client, SD_DHCP_OPTION_NEW_TZDB_TIMEZONE);
-        if (r < 0)
-                return r;
+        /* FIXME: why this assertion? ^^^ */
+        /* RFC7844 section 3.6.:
+           The client intending to protect its privacy SHOULD only request a
+           minimal number of options in the PRL and SHOULD also randomly shuffle
+           the ordering of option codes in the PRL.  If this random ordering
+           cannot be implemented, the client MAY order the option codes in the
+           PRL by option code number (lowest to highest).
+        */
+        /* NOTE; there should be a variable to send or not these PRL options,
+         * which would be nullified when using RFC7844 */
 
         r = dhcp4_set_hostname(link);
         if (r < 0)

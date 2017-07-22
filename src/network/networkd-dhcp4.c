@@ -678,6 +678,12 @@ int dhcp4_configure(Link *link) {
         if (r < 0)
                 return r;
 
+        /* RFC7844 section 3.10:
+           SHOULD NOT use the Vendor Class Identifier option */
+        /* NOTE: dhcp_vendor_class_identifier is false by default
+         * (where is that set?),
+         * but this option should be nullified when using the Anonymity
+         * Profiles */
         if (link->network->dhcp_vendor_class_identifier) {
                 r = sd_dhcp_client_set_vendor_class_identifier(link->dhcp_client,
                                                                link->network->dhcp_vendor_class_identifier);

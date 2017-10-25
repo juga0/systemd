@@ -115,7 +115,7 @@ void network_apply_anonymize_if_set(Network *network) {
         network->dhcp_use_mtu = false;
         /* RFC7844 section 3.6.
         * same comments as previous option */
-        network->dhcp_use_routes = false;
+        network->dhcp_use_routes = true;
         /* RFC7844 section 3.6.
         * same comments as previous option */
         network->dhcp_use_timezone = false;
@@ -208,7 +208,10 @@ static int network_load_one(Manager *manager, const char *filename) {
         network->dhcp_use_ntp = true;
         network->dhcp_use_dns = true;
         network->dhcp_use_hostname = true;
-        /* NOTE: this var might be overwriten by network_apply_anonymize_if_set */
+        /* NOTE: this is needed to use the routes.
+        /* The PRL options won't be added twice as
+        /* sd_dhcp_client_set_request_option will return EEXIT */
+        /* TODO: check that this is correct */
         network->dhcp_use_routes = true;
         /* NOTE: this var might be overwriten by network_apply_anonymize_if_set */
         network->dhcp_send_hostname = true;
